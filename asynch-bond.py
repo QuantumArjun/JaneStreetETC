@@ -214,14 +214,14 @@ def bondEval(exchange):
     print(num_to_sell)
     print(position_dict["BOND"])
     print(pending_dict["BOND"])
-    if num_to_sell > 0:
+    if(position_dict["BOND"] > -20):
         write_to_exchange(exchange, {"type": "add", "order_id": ORDER_number, "symbol": "BOND", "dir": "SELL", "price": 1001, "size": 5})
         ORDER_number += 1
         read_from_exchange(exchange)
         print("ORDER EXEC")
-        position_dict["BOND"] -= 5
-    if num_to_buy > 0:
-        write_to_exchange(exchange, {"type": "add", "order_id": ORDER_number, "symbol": "BOND", "dir": "BUY", "price": 999, "size": 5})
+    #position_dict["BOND"] -= 5
+    if num_to_buy > 0 and position_dict["BOND"] < 20:
+        write_to_exchange(exchange, {"type": "add", "order_id": ORDER_number, "symbol": "BOND", "dir": "BUY", "price": 999, "size": num_to_buy})
         ORDER_number += 1
         pending_dict["BOND"] += 5
         read_from_exchange(exchange)
