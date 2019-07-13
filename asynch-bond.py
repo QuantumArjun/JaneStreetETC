@@ -258,18 +258,9 @@ def main():
     write_to_exchange(exchange, {"type": "hello", "team": team_name.upper()})
     print(read_from_exchange(exchange))
     while True:
-        print("looping")
-        procs = []
-        proc = Process(target=every_exchange_in_one, args=(exchange,))  # instantiating without any argument
-        procs.append(proc)
-        proc.start()
-        proc = Process(target=bondEval, args=(exchange,))
-        procs.append(proc)
-        proc.start()
+        every_exchange_in_one(exchange)
+        bondEval(exchange)
 
-        # complete the processes
-        for proc in procs:
-            proc.join()
 
     # A common mistake people make is to call write_to_exchange() > 1
     # time for every read_from_exchange() response.
