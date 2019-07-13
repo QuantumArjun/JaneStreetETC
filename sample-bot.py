@@ -45,11 +45,16 @@ def read_from_exchange(exchange):
 # ~~~~~============== MAIN LOOP ==============~~~~~
 
 
+def printHelloFromExchange(hello_from_exchange):
+    print("type "+ str(hello_from_exchange["type"]))
+    for symbol in hello_from_exchange["symbols"]:
+        print("type: "+ str(symbol["symbol"]) + "     quantity: " + str(symbol["position"]))
 
 
 
 
-
+def mean(highest_bid, lowest_offer):
+    return (highest_bid+lowest_offer)/2
 
 
 
@@ -62,7 +67,7 @@ def main():
     # time for every read_from_exchange() response.
     # Since many write messages generate marketdata, this will cause an
     # exponential explosion in pending messages. Please, don't do that!
-    print("The exchange replied:", hello_from_exchange, file=sys.stderr)
+    printHelloFromExchange(hello_from_exchange)
 
 if __name__ == "__main__":
     main()
