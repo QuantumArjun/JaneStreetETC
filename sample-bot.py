@@ -10,6 +10,7 @@ from __future__ import print_function
 import sys
 import socket
 import json
+import time
 
 # ~~~~~============== CONFIGURATION  ==============~~~~~
 # replace REPLACEME with your team name!
@@ -22,7 +23,7 @@ test_mode = True
 # 0 is prod-like
 # 1 is slower
 # 2 is empty
-test_exchange_index=2
+test_exchange_index=1
 prod_exchange_hostname="production"
 
 port=25000 + (test_exchange_index if test_mode else 0)
@@ -194,10 +195,11 @@ def parse_from_exchange(from_exchange):
         print("outttt!!!" + str(from_exchange["order_id"]))
 
 
-def bondEval(exchange, max_limit):
+def bondEval(exchange):
     global ORDER_number
+    global limit_dict
     #determine how many to sell
-    num_to_buy = max_limit[0] - (position_dict["BOND"] + pending_dict["BOND"])
+    num_to_buy = limit_dict["BOND"] - (position_dict["BOND"] + pending_dict["BOND"])
     num_to_sell = position_dict["BOND"] - pending_dict["BOND"]
     write_to_exchange(exchange, {"type": "add", "order_id": ORDER_number, "symbol": "BOND", "dir": "BUY", "price": 999, "size": num_to_buy})
     ORDER_number += 1
@@ -209,16 +211,19 @@ def main():
     exchange = connect()
     write_to_exchange(exchange, {"type": "hello", "team": team_name.upper()})
     hello_from_exchange = read_from_exchange(exchange)
-    from_exchange = read_from_exchange(exchange)
-    parse_from_exchange(from_exchange)
-    bondEval()
-    from_exchange = read_from_exchange(exchange)
-    parse_from_exchange(from_exchange)
+    printHelloFromExchange(hello_from_exchange)
+    while True:
+        from_exchange = read_from_exchange(exchange)
+        parse_from_exchange(from_exchange)
+        bondEval(exchange)
+        from_exchange = read_from_exchange(exchange)
+        parse_from_exchange(from_exchange)
+        time.sleep(0.000001)
     # A common mistake people make is to call write_to_exchange() > 1
     # time for every read_from_exchange() response.
     # Since many write messages generate marketdata, this will cause an
     # exponential explosion in pending messages. Please, don't do that!
-    printHelloFromExchange(hello_from_exchange)
+
 
 if __name__ == "__main__":
     main()
