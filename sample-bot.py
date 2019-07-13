@@ -17,7 +17,7 @@ import time
 team_name="INDIANPYRAMIDS"
 # This variable dictates whether or not the bot is connecting to the prod
 # or test exchange. Be careful with this switch!
-test_mode = True
+test_mode = False
 
 # This setting changes which test exchange is connected to.
 # 0 is prod-like
@@ -137,7 +137,6 @@ def mean(highest_bid, lowest_offer):
 
 def parse_from_exchange(from_exchange):
     global ACTIVE
-
     if "hello" in from_exchange:
         printHelloFromExchange(from_exchange)
     if "open" in from_exchange:
@@ -215,19 +214,18 @@ def bondEval(exchange):
     print(num_to_sell)
     print(position_dict["BOND"])
     print(pending_dict["BOND"])
-
-    if num_to_buy > 0:
-        write_to_exchange(exchange, {"type": "add", "order_id": ORDER_number, "symbol": "BOND", "dir": "BUY", "price": 999, "size": 5})
-        ORDER_number += 1
-        pending_dict["BOND"] += num_to_buy
-        read_from_exchange(exchange)
-        print("ORDER EXEC BUY")
     if num_to_sell > 0:
         write_to_exchange(exchange, {"type": "add", "order_id": ORDER_number, "symbol": "BOND", "dir": "SELL", "price": 1001, "size": 5})
         ORDER_number += 1
         read_from_exchange(exchange)
         print("ORDER EXEC")
-        position_dict["BOND"] -= num_to_sell
+        position_dict["BOND"] -= 5
+    if num_to_buy > 0:
+        write_to_exchange(exchange, {"type": "add", "order_id": ORDER_number, "symbol": "BOND", "dir": "BUY", "price": 999, "size": 5})
+        ORDER_number += 1
+        pending_dict["BOND"] += 5
+        read_from_exchange(exchange)
+        print("ORDER EXEC BUY")
     print("position for bonds: "+str(position_dict["BOND"]))
 
 def main():
@@ -237,6 +235,7 @@ def main():
     print(read_from_exchange(exchange))
     while True:
         print("looping")
+
         from_exchange = read_from_exchange(exchange)
         print("read from exchange")
         parse_from_exchange(from_exchange)
