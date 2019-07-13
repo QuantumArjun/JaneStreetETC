@@ -11,6 +11,7 @@ import sys
 import socket
 import json
 import time
+from multiprocessing import Process
 
 # ~~~~~============== CONFIGURATION  ==============~~~~~
 # replace REPLACEME with your team name!
@@ -137,112 +138,126 @@ def mean(highest_bid, lowest_offer):
 
 def parse_from_exchange(from_exchange):
     global ACTIVE
-    if "hello" in from_exchange:
-        printHelloFromExchange(from_exchange)
-    if "open" in from_exchange:
-        for symbol in from_exchange["symbols"]:
-            ACTIVE[symbol] = True
-            print(symbol)
-    if "close" in from_exchange:
-        for symbol in from_exchange["symbols"]:
-            ACTIVE[symbol] = False
-            print(symbol)
-    if "error" in from_exchange:
-        print("EEEEEEEEEEERRRRRRRRRRRRRRRRROOOOOOOOOOOR")
-        print(from_exchange["error"])
-    if "book" in from_exchange:
-        cache_symbol = from_exchange["symbol"]
-        if cache_symbol == "BOND":
-            for i in from_exchange["buy"]:
-                BOND_buy.append(i)
-            for i in from_exchange["sell"]:
-                BOND_sell.append(i)
-        if cache_symbol == "VALBZ":
-            for i in from_exchange["buy"]:
-                VALBZ_buy.append(i)
-            for i in from_exchange["sell"]:
-                VALBZ_sell.append(i)
-        if cache_symbol == "VALE":
-            for i in from_exchange["buy"]:
-                VALE_buy.append(i)
-            for i in from_exchange["sell"]:
-                VALE_sell.append(i)
-        if cache_symbol == "GS":
-            for i in from_exchange["buy"]:
-                GS_buy.append(i)
-            for i in from_exchange["sell"]:
-                GS_sell.append(i)
-        if cache_symbol == "MS":
-            for i in from_exchange["buy"]:
-                MS_buy.append(i)
-            for i in from_exchange["sell"]:
-                MS_sell.append(i)
-        if cache_symbol == "WFC":
-            for i in from_exchange["buy"]:
-                WFC_buy.append(i)
-            for i in from_exchange["sell"]:
-                WFC_sell.append(i)
-        if cache_symbol == "XLF":
-            for i in from_exchange["buy"]:
-                XLF_buy.append(i)
-            for i in from_exchange["sell"]:
-                XLF_sell.append(i)
-    if "trade" in from_exchange:
-        print("TRADE:"+ from_exchange["symbol"]+ " price "+ str(from_exchange["price"])+" size "+ str(from_exchange["size"]))
-    if "ack" in from_exchange:
-        print("ORDER NUMBER "+str(from_exchange["order_id"]))
-    if "reject" in from_exchange:
-        print("reject!!!" + str(from_exchange["order_id"]))
-    if "fill" in from_exchange:
-        print("fill " + str(from_exchange["order_id"]))
-        print(from_exchange["symbol"]+" "+from_exchange["dir"]+" "+from_exchange["price"]+" "+from_exchange["size"])
-        if from_exchange["dir"] == "BUY":
-            position_dict[from_exchange["symbol"]] += from_exchange["size"]
-            pending_dict[from_exchange["symbol"]] -= from_exchange["size"]
-    if "out" in from_exchange:
-        print("outttt!!!" + str(from_exchange["order_id"]))
+    print("HEREEEE")
+    while True:
+        print("HEREEEE")
+        print(from_exchange.keys())
+        print(from_exchange["type"])
+        if "hello" in from_exchange.keys():
+            printHelloFromExchange(from_exchange)
+        if "open" in from_exchange:
+            for symbol in from_exchange["symbols"]:
+                ACTIVE[symbol] = True
+                print(symbol)
+        if "close" in from_exchange.keys():
+            for symbol in from_exchange["symbols"]:
+                ACTIVE[symbol] = False
+                print(symbol)
+        if "error" in from_exchange.keys():
+            print("EEEEEEEEEEERRRRRRRRRRRRRRRRROOOOOOOOOOOR")
+            print(from_exchange["error"])
+        if "book" in from_exchange.keys():
+            cache_symbol = from_exchange["symbol"]
+            if cache_symbol == "BOND":
+                for i in from_exchange["buy"]:
+                    BOND_buy.append(i)
+                for i in from_exchange["sell"]:
+                    BOND_sell.append(i)
+            if cache_symbol == "VALBZ":
+                for i in from_exchange["buy"]:
+                    VALBZ_buy.append(i)
+                for i in from_exchange["sell"]:
+                    VALBZ_sell.append(i)
+            if cache_symbol == "VALE":
+                for i in from_exchange["buy"]:
+                    VALE_buy.append(i)
+                for i in from_exchange["sell"]:
+                    VALE_sell.append(i)
+            if cache_symbol == "GS":
+                for i in from_exchange["buy"]:
+                    GS_buy.append(i)
+                for i in from_exchange["sell"]:
+                    GS_sell.append(i)
+            if cache_symbol == "MS":
+                for i in from_exchange["buy"]:
+                    MS_buy.append(i)
+                for i in from_exchange["sell"]:
+                    MS_sell.append(i)
+            if cache_symbol == "WFC":
+                for i in from_exchange["buy"]:
+                    WFC_buy.append(i)
+                for i in from_exchange["sell"]:
+                    WFC_sell.append(i)
+            if cache_symbol == "XLF":
+                for i in from_exchange["buy"]:
+                    XLF_buy.append(i)
+                for i in from_exchange["sell"]:
+                    XLF_sell.append(i)
+        if "trade" in from_exchange.keys():
+            print("TRADE:"+ from_exchange["symbol"]+ " price "+ str(from_exchange["price"])+" size "+ str(from_exchange["size"]))
+        if "ack" in from_exchange.keys():
+            print("ORDER NUMBER "+str(from_exchange["order_id"]))
+        if "reject" in from_exchange.keys():
+            print("reject!!!" + str(from_exchange["order_id"]))
+        if "fill" in from_exchange.keys():
+            print("fill " + str(from_exchange["order_id"]))
+            print(from_exchange["symbol"]+" "+from_exchange["dir"]+" "+from_exchange["price"]+" "+from_exchange["size"])
+            if from_exchange["dir"] == "BUY":
+                position_dict[from_exchange["symbol"]] += from_exchange["size"]
+                pending_dict[from_exchange["symbol"]] -= from_exchange["size"]
+        if "out" in from_exchange.keys():
+            print("outttt!!!" + str(from_exchange["order_id"]))
 
 
 def bondEval(exchange):
     global ORDER_number
     global limit_dict
-    #determine how many to sell
-    num_to_buy = limit_dict["BOND"] - (position_dict["BOND"] + pending_dict["BOND"])
-    num_to_sell = position_dict["BOND"]
-    print(" num to but, sell, position, pending")
-    print(num_to_buy)
-    print(num_to_sell)
-    print(position_dict["BOND"])
-    print(pending_dict["BOND"])
-    if num_to_sell > 0:
-        write_to_exchange(exchange, {"type": "add", "order_id": ORDER_number, "symbol": "BOND", "dir": "SELL", "price": 1001, "size": 5})
-        ORDER_number += 1
-        read_from_exchange(exchange)
-        print("ORDER EXEC")
-        position_dict["BOND"] -= 5
-    if num_to_buy > 0:
-        write_to_exchange(exchange, {"type": "add", "order_id": ORDER_number, "symbol": "BOND", "dir": "BUY", "price": 999, "size": 5})
-        ORDER_number += 1
-        pending_dict["BOND"] += 5
-        read_from_exchange(exchange)
-        print("ORDER EXEC BUY")
-    print("position for bonds: "+str(position_dict["BOND"]))
+    while True:
+        #determine how many to sell
+        num_to_buy = limit_dict["BOND"] - (position_dict["BOND"] + pending_dict["BOND"])
+        num_to_sell = position_dict["BOND"]
+        print(" num to but, sell, position, pending")
+        print(num_to_buy)
+        print(num_to_sell)
+        print(position_dict["BOND"])
+        print(pending_dict["BOND"])
+        if num_to_sell > 0:
+            write_to_exchange(exchange, {"type": "add", "order_id": ORDER_number, "symbol": "BOND", "dir": "SELL", "price": 1001, "size": 5})
+            ORDER_number += 1
+            read_from_exchange(exchange)
+            print("ORDER EXEC")
+            position_dict["BOND"] -= 5
+        if num_to_buy > 0:
+            write_to_exchange(exchange, {"type": "add", "order_id": ORDER_number, "symbol": "BOND", "dir": "BUY", "price": 999, "size": 5})
+            ORDER_number += 1
+            pending_dict["BOND"] += 5
+            read_from_exchange(exchange)
+            print("ORDER EXEC BUY")
+        print("position for bonds: "+str(position_dict["BOND"]))
+def every_exchange_in_one(exchange):
+    from_exchange = read_from_exchange(exchange)
+    print("read from exchange")
+    print(from_exchange)
+    parse_from_exchange(from_exchange)
 
 def main():
-
     exchange = connect()
     write_to_exchange(exchange, {"type": "hello", "team": team_name.upper()})
     print(read_from_exchange(exchange))
     while True:
         print("looping")
+        procs = []
+        proc = Process(target=every_exchange_in_one, args=(exchange,))  # instantiating without any argument
+        procs.append(proc)
+        proc.start()
+        proc = Process(target=bondEval, args=(exchange,))
+        procs.append(proc)
+        proc.start()
 
-        from_exchange = read_from_exchange(exchange)
-        print("read from exchange")
-        parse_from_exchange(from_exchange)
-        print("parse from server")
-        bondEval(exchange)
-        print(" in bond eval")
-        time.sleep(0.000001)
+        # complete the processes
+        for proc in procs:
+            proc.join()
+
     # A common mistake people make is to call write_to_exchange() > 1
     # time for every read_from_exchange() response.
     # Since many write messages generate marketdata, this will cause an
