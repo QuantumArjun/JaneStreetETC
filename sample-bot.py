@@ -23,7 +23,7 @@ test_mode = True
 # 0 is prod-like
 # 1 is slower
 # 2 is empty
-test_exchange_index=1
+test_exchange_index=0
 prod_exchange_hostname="production"
 
 port=25000 + (test_exchange_index if test_mode else 0)
@@ -105,7 +105,17 @@ pending_dict = {
 'WFC': 0,
 'XLF': 0,
 }
-ORDER_number = int()
+order_history = {
+'BOND': {},
+'VALBZ': {},
+'VALE': {},
+'GS': {},
+'MS': {},
+'WFC': {},
+'XLF': {},
+}
+
+ORDER_number = 1
 # ~~~~~============== MAIN LOOP ==============~~~~~
 
 
@@ -180,17 +190,16 @@ def parse_from_exchange(from_exchange):
                 XLF_sell.append(i)
     if "trade" in from_exchange:
         print("TRADE:"+ from_exchange["symbol"]+ " price "+ str(from_exchange["price"])+" size "+ str(from_exchange["size"]))
-
     if "ack" in from_exchange:
         print("ORDER NUMBER "+str(from_exchange["order_id"]))
-
     if "reject" in from_exchange:
         print("reject!!!" + str(from_exchange["order_id"]))
     if "fill" in from_exchange:
         print("fill " + str(from_exchange["order_id"]))
         print(from_exchange["symbol"]+" "+from_exchange["dir"]+" "+from_exchange["price"]+" "+from_exchange["size"])
-        position_dict[from_exchange["symbol"]] -= from_exchange["size"]
-        pending_dict[from_exchange["symbol"]] += from_exchange["size"]
+        if from_exchange["dir"] == "BUY":
+            position_dict[from_exchange["symbol"]] += from_exchange["size"]
+            pending_dict[from_exchange["symbol"]] -= from_exchange["size"]
     if "out" in from_exchange:
         print("outttt!!!" + str(from_exchange["order_id"]))
 
@@ -200,24 +209,40 @@ def bondEval(exchange):
     global limit_dict
     #determine how many to sell
     num_to_buy = limit_dict["BOND"] - (position_dict["BOND"] + pending_dict["BOND"])
-    num_to_sell = position_dict["BOND"] - pending_dict["BOND"]
-    write_to_exchange(exchange, {"type": "add", "order_id": ORDER_number, "symbol": "BOND", "dir": "BUY", "price": 999, "size": num_to_buy})
-    ORDER_number += 1
-    write_to_exchange(exchange, {"type": "add", "order_id": ORDER_number, "symbol": "BOND", "dir": "SELL", "price": 1001, "size": num_to_sell})
-    ORDER_number += 1
-    position_dict["BOND"] += num_to_buy
-    pending_dict["BOND"] += num_to_sell
+    num_to_sell = position_dict["BOND"]
+    print(" num to but, sell, position, pending")
+    print(num_to_buy)
+    print(num_to_sell)
+    print(position_dict["BOND"])
+    print(pending_dict["BOND"])
+
+    if num_to_buy > 0:
+        write_to_exchange(exchange, {"type": "add", "order_id": ORDER_number, "symbol": "BOND", "dir": "BUY", "price": 999, "size": 5})
+        ORDER_number += 1
+        pending_dict["BOND"] += num_to_buy
+        read_from_exchange(exchange)
+        print("ORDER EXEC BUY")
+    if num_to_sell > 0:
+        write_to_exchange(exchange, {"type": "add", "order_id": ORDER_number, "symbol": "BOND", "dir": "SELL", "price": 1001, "size": 5})
+        ORDER_number += 1
+        read_from_exchange(exchange)
+        print("ORDER EXEC")
+        position_dict["BOND"] -= num_to_sell
+    print("position for bonds: "+str(position_dict["BOND"]))
+
 def main():
+
     exchange = connect()
     write_to_exchange(exchange, {"type": "hello", "team": team_name.upper()})
-    hello_from_exchange = read_from_exchange(exchange)
-    printHelloFromExchange(hello_from_exchange)
+    print(read_from_exchange(exchange))
     while True:
+        print("looping")
         from_exchange = read_from_exchange(exchange)
+        print("read from exchange")
         parse_from_exchange(from_exchange)
+        print("parse from server")
         bondEval(exchange)
-        from_exchange = read_from_exchange(exchange)
-        parse_from_exchange(from_exchange)
+        print(" in bond eval")
         time.sleep(0.000001)
     # A common mistake people make is to call write_to_exchange() > 1
     # time for every read_from_exchange() response.
