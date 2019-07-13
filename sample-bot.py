@@ -42,7 +42,74 @@ def read_from_exchange(exchange):
     return json.loads(exchange.readline())
 
 
+# -===============constants=====================
+
+BOND_buy = []
+BOND_sell = []
+
+
+VALBZ_buy = []
+VALBZ_sell = []
+
+
+VALE_buy = []
+VALE_sell = []
+
+GS_buy = []
+GS_sell = []
+
+MS_buy = []
+MS_sell = []
+
+WFC_buy = []
+WFC_sell = []
+
+XLF_buy = []
+XLF_sell = []
+
+
+ACTIVE_buy  = {
+'BOND': False,
+'VALBZ': False,
+'VALE': False,
+'GS': False,
+'MS':False,
+'WFC': False,
+'XLF': False,
+}
+limit_dict = {
+'BOND': 100,
+'VALBZ': 10,
+'VALE': 10,
+'GS': 100,
+'MS': 100,
+'WFC': 100,
+'XLF': 100,
+}
+position_dict = {
+'BOND': 0,
+'VALBZ': 0,
+'VALE': 0,
+'GS': 0,
+'MS': 0,
+'WFC': 0,
+'XLF': 0,
+}
+pending_dict = {
+'BOND': 0,
+'VALBZ': 0,
+'VALE': 0,
+'GS': 0,
+'MS': 0,
+'WFC': 0,
+'XLF': 0,
+}
 # ~~~~~============== MAIN LOOP ==============~~~~~
+
+
+
+
+
 
 
 def printHelloFromExchange(hello_from_exchange):
@@ -56,7 +123,71 @@ def printHelloFromExchange(hello_from_exchange):
 def mean(highest_bid, lowest_offer):
     return (highest_bid+lowest_offer)/2
 
+def parse_from_exchange(from_exchange):
+    if from_exchange["hello"]:
+        printHelloFromExchange(from_exchange)
+    if from_exchange["open"]:
+        for symbol in from_exchange["symbols"]:
+            ACTIVE[symbol] = True
+            print(symbol)
+    if from_exchange["close"]:
+        for symbol in from_exchange["symbols"]:
+            ACTIVE[symbol] = False
+            print(symbol)
+    if from_exchange["error"]:
+        print("EEEEEEEEEEERRRRRRRRRRRRRRRRROOOOOOOOOOOR")
+        print(from_exchange["error"])
+    if from_exchange["book"]:
+        cache_symbol = from_exchange["symbol"]
+        if cache_symbol == "BOND":
+            for i in from_exchange["buy"]:
+                BOND_buy.append(i)
+            for i in from_exchange["sell"]:
+                BOND_sell.append(i)
+        if cache_symbol == "VALBZ":
+            for i in from_exchange["buy"]:
+                VALBZ_buy.append(i)
+            for i in from_exchange["sell"]:
+                VALBZ_sell.append(i)
+        if cache_symbol == "VALE":
+            for i in from_exchange["buy"]:
+                VALE_buy.append(i)
+            for i in from_exchange["sell"]:
+                VALE_sell.append(i)
+        if cache_symbol == "GS":
+            for i in from_exchange["buy"]:
+                GS_buy.append(i)
+            for i in from_exchange["sell"]:
+                GS_sell.append(i)
+        if cache_symbol == "MS":
+            for i in from_exchange["buy"]:
+                MS_buy.append(i)
+            for i in from_exchange["sell"]:
+                MS_sell.append(i)
+        if cache_symbol == "WFC":
+            for i in from_exchange["buy"]:
+                WFC_buy.append(i)
+            for i in from_exchange["sell"]:
+                WFC_sell.append(i)
+        if cache_symbol == "XLF":
+            for i in from_exchange["buy"]:
+                XLF_buy.append(i)
+            for i in from_exchange["sell"]:
+                XLF_sell.append(i)
+    if from_exchange["trade"]:
+        print("TRADE:"+ from_exchange["symbol"]+ " price "+ str(from_exchange["price"])+" size "+ str(from_exchange["size"]))
 
+    if from_exchange["ack"]:
+        print("ORDER NUMBER "+str(from_exchange["order_id"]))
+    if from_exchange["reject"]:
+        print("reject!!!" + str(from_exchange["order_id"]))
+    if from_exchange["fill"]:
+        print("fill " + str(from_exchange["order_id"]))
+        print(from_exchange["symbol"]+" "+from_exchange["dir"]+" "+from_exchange["price"]+" "+from_exchange["size"])
+        position_dict[from_exchange["symbol"]] -= from_exchange["size"]
+        pending_dict[from_exchange["symbol"]] += from_exchange["size"]
+    if from_exchange["out"]:
+        print("outttt!!!" + str(from_exchange["order_id"]))
 
 
 def main():
