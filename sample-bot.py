@@ -104,6 +104,7 @@ pending_dict = {
 'WFC': 0,
 'XLF': 0,
 }
+ORDER_number = int()
 # ~~~~~============== MAIN LOOP ==============~~~~~
 
 
@@ -124,20 +125,22 @@ def mean(highest_bid, lowest_offer):
     return (highest_bid+lowest_offer)/2
 
 def parse_from_exchange(from_exchange):
-    if from_exchange["hello"]:
+    global ACTIVE
+
+    if "hello" in from_exchange:
         printHelloFromExchange(from_exchange)
-    if from_exchange["open"]:
+    if "open" in from_exchange:
         for symbol in from_exchange["symbols"]:
             ACTIVE[symbol] = True
             print(symbol)
-    if from_exchange["close"]:
+    if "close" in from_exchange:
         for symbol in from_exchange["symbols"]:
             ACTIVE[symbol] = False
             print(symbol)
-    if from_exchange["error"]:
+    if "error" in from_exchange:
         print("EEEEEEEEEEERRRRRRRRRRRRRRRRROOOOOOOOOOOR")
         print(from_exchange["error"])
-    if from_exchange["book"]:
+    if "book" in from_exchange:
         cache_symbol = from_exchange["symbol"]
         if cache_symbol == "BOND":
             for i in from_exchange["buy"]:
@@ -174,26 +177,43 @@ def parse_from_exchange(from_exchange):
                 XLF_buy.append(i)
             for i in from_exchange["sell"]:
                 XLF_sell.append(i)
-    if from_exchange["trade"]:
+    if "trade" in from_exchange:
         print("TRADE:"+ from_exchange["symbol"]+ " price "+ str(from_exchange["price"])+" size "+ str(from_exchange["size"]))
 
-    if from_exchange["ack"]:
+    if "ack" in from_exchange:
         print("ORDER NUMBER "+str(from_exchange["order_id"]))
-    if from_exchange["reject"]:
+
+    if "reject" in from_exchange:
         print("reject!!!" + str(from_exchange["order_id"]))
-    if from_exchange["fill"]:
+    if "fill" in from_exchange:
         print("fill " + str(from_exchange["order_id"]))
         print(from_exchange["symbol"]+" "+from_exchange["dir"]+" "+from_exchange["price"]+" "+from_exchange["size"])
         position_dict[from_exchange["symbol"]] -= from_exchange["size"]
         pending_dict[from_exchange["symbol"]] += from_exchange["size"]
-    if from_exchange["out"]:
+    if "out" in from_exchange:
         print("outttt!!!" + str(from_exchange["order_id"]))
 
 
+def bondEval(exchange, max_limit):
+    global ORDER_number
+    #determine how many to sell
+    num_to_buy = max_limit[0] - (position_dict["BOND"] + pending_dict["BOND"])
+    num_to_sell = position_dict["BOND"] - pending_dict["BOND"]
+    write_to_exchange(exchange, {"type": "add", "order_id": ORDER_number, "symbol": "BOND", "dir": "BUY", "price": 999, "size": num_to_buy})
+    ORDER_number += 1
+    write_to_exchange(exchange, {"type": "add", "order_id": ORDER_number, "symbol": "BOND", "dir": "SELL", "price": 1001, "size": num_to_sell})
+    ORDER_number += 1
+    position_dict["BOND"] += num_to_buy
+    pending_dict["BOND"] += num_to_sell
 def main():
     exchange = connect()
     write_to_exchange(exchange, {"type": "hello", "team": team_name.upper()})
     hello_from_exchange = read_from_exchange(exchange)
+    from_exchange = read_from_exchange(exchange)
+    parse_from_exchange(from_exchange)
+    bondEval()
+    from_exchange = read_from_exchange(exchange)
+    parse_from_exchange(from_exchange)
     # A common mistake people make is to call write_to_exchange() > 1
     # time for every read_from_exchange() response.
     # Since many write messages generate marketdata, this will cause an
