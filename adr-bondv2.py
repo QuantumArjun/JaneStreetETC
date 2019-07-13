@@ -18,7 +18,7 @@ from multiprocessing import Process
 team_name="INDIANPYRAMIDS"
 # This variable dictates whether or not the bot is connecting to the prod
 # or test exchange. Be careful with this switch!
-test_mode = True
+test_mode = False
 
 # This setting changes which test exchange is connected to.
 # 0 is prod-like
@@ -115,7 +115,6 @@ order_history = {
 'WFC': {},
 'XLF': {},
 }
-ADR_FEE = 10
 
 ORDER_number = 1
 # ~~~~~============== MAIN LOOP ==============~~~~~
@@ -248,52 +247,6 @@ def bondEval(exchange):
         print("ORDER EXEC BUY")
     print("position for bonds: "+str(position_dict["BOND"]))
 
-def adrEval(exchange):
-    global ORDER_number
-    global VALBZ_buy
-    global VALBZ_sell
-    global VALE_buy
-    global VALE_sell
-    global ADR_FEE
-    CONVERSION_NUMBER = 10
-    fair_VALE = fair_value(VALE_buy, VALE_sell)
-    fair_VALBZ = fair_value(VALBZ_buy, VALBZ_sell)
-    print(str(fair_VALE)+ " "+ str(fair_VALBZ))
-    if (fair_VALE*10) > ((fair_VALBZ*10)+ADR_FEE):
-        write_to_exchange(exchange, {"type": "add", "order_id": ORDER_number, "symbol": "VALBZ", "dir": "BUY", "price": fair_VALBZ  + 1, "size": CONVERSION_NUMBER})
-        read_from_exchange(exchange)
-        ORDER_number += 1
-        write_to_exchange(exchange, {"type": "convert", "order_id": ORDER_number, "symbol": "VALBZ", "dir": "SELL",  "size": CONVERSION_NUMBER})
-        read_from_exchange(exchange)
-        ORDER_number += 1
-        write_to_exchange(exchange, {"type": "add", "order_id": ORDER_number, "symbol": "VALE", "dir": "SELL", "price": fair_VALE- 1, "size": CONVERSION_NUMBER})
-        read_from_exchange(exchange)
-        ORDER_number += 1
-
-def fair_value(VAL_buy, VAL_sell):
-    #calculate the fair value
-    #loop therough last 10 of buys and sells in order to calcualte the fair value
-    #return the average divided by 2
-    VAL_max = 0
-    VAL_min = 999999999999
-
-    for one in VAL_buy:
-        if one[0] > VAL_max:
-            VAL_max = one[0]
-
-    for one in VAL_sell:
-        if one[0] < VAL_min:
-            VAL_min = one[0]
-
-
-    # for i in range (0, len(VAL_buy)):
-    #     if 1.5 * VAL_buy[i] < VAL_max:
-    #         VAL_max = VALE_buy[i]
-
-
-    VAL_fair =  (VAL_min + VAL_max) / 2
-    return VAL_fair
-
 def every_exchange_in_one(exchange):
     from_exchange = read_from_exchange(exchange)
     print("read from exchange")
@@ -306,7 +259,7 @@ def main():
     print(read_from_exchange(exchange))
     while True:
         every_exchange_in_one(exchange)
-        adrEval(exchange)
+
         bondEval(exchange)
 
 
