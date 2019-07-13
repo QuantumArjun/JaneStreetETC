@@ -139,7 +139,6 @@ def mean(highest_bid, lowest_offer):
 
 def parse_from_exchange(from_exchange):
     global ACTIVE
-    print("HERERE")
     print(from_exchange.keys())
     if from_exchange["type"] == "hello" :
         printHelloFromExchange(from_exchange)
@@ -254,34 +253,55 @@ def adrEval(exchange):
     global VALBZ_sell
     global VALE_buy
     global VALE_sell
+    global PROD
     global ADR_FEE
-    CONVERSION_NUMBER = 10
-    fair_VALE = fair_value(VALE_buy, VALE_sell)
-    fair_VALBZ = fair_value(VALBZ_buy, VALBZ_sell)
+    CONVERSION_NUMBER = 2
+    fair_VALE = int(fair_value(VALE_buy, VALE_sell))
+    fair_VALBZ = mean(VALBZ_sell)
     print(str(fair_VALE)+ " "+ str(fair_VALBZ))
-    if (fair_VALE*10) > ((fair_VALBZ*10)+ADR_FEE):
-        write_to_exchange(exchange, {"type": "add", "order_id": ORDER_number, "symbol": "VALBZ", "dir": "BUY", "price": fair_VALBZ  + 1, "size": CONVERSION_NUMBER})
+    print("please i am here")
+    if (fair_VALBZ*CONVERSION_NUMBER) > ((fair_VALE*CONVERSION_NUMBER)+ADR_FEE):
+        print("============================================================================")
+        print("herer")
+        print(str(fair_VALE) + " " + str(fair_VALBZ))
+        ORDER_number += 1
+        write_to_exchange(exchange, {"type": "add", "order_id": ORDER_number, "symbol": "VALE", "dir": "BUY", "price": fair_VALE  + 1, "size": CONVERSION_NUMBER})
         read_from_exchange(exchange)
         ORDER_number += 1
-        write_to_exchange(exchange, {"type": "convert", "order_id": ORDER_number, "symbol": "VALBZ", "dir": "SELL",  "size": CONVERSION_NUMBER})
+        write_to_exchange(exchange, {"type": "convert", "order_id": ORDER_number, "symbol": "VALE", "dir": "SELL",  "size": CONVERSION_NUMBER})
         read_from_exchange(exchange)
         ORDER_number += 1
-        write_to_exchange(exchange, {"type": "add", "order_id": ORDER_number, "symbol": "VALE", "dir": "SELL", "price": fair_VALE- 1, "size": CONVERSION_NUMBER})
+    if position_dict["VALBZ"] > 2:
+        write_to_exchange(exchange, {"type": "add", "order_id": ORDER_number, "symbol": "VALBZ", "dir": "SELL", "price": fair_VALBZ - 10, "size": 2})
         read_from_exchange(exchange)
         ORDER_number += 1
 
+def mean(x):
+    if len(x)>10:
+        x = x[-10:]
+    big_boy = 0
+    if len(x) == 0:
+        return 0
+    for i in x:
+        big_boy += i[0]
+    return big_boy//len(x)
 def fair_value(VAL_buy, VAL_sell):
     #calculate the fair value
     #loop therough last 10 of buys and sells in order to calcualte the fair value
     #return the average divided by 2
     VAL_max = 0
     VAL_min = 999999999999
-
-    for one in VAL_buy:
+    if len(VAL_buy)>10 and len(VAL_sell)> 10:
+        small_buy = VAL_buy[-10:]
+        small_sell = VAL_buy[-10:]
+    else:
+        small_buy = VAL_buy
+        small_sell = VAL_sell
+    for one in small_buy:
         if one[0] > VAL_max:
             VAL_max = one[0]
 
-    for one in VAL_sell:
+    for one in small_sell:
         if one[0] < VAL_min:
             VAL_min = one[0]
 
