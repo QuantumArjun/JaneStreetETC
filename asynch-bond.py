@@ -24,7 +24,7 @@ test_mode = True
 # 0 is prod-like
 # 1 is slower
 # 2 is empty
-test_exchange_index=0
+test_exchange_index=1
 prod_exchange_hostname="production"
 
 port=25000 + (test_exchange_index if test_mode else 0)
@@ -225,6 +225,7 @@ def parse_from_exchange(from_exchange):
 def bondEval(exchange):
     global ORDER_number
     global limit_dict
+
     #determine how many to sell
     num_to_buy = limit_dict["BOND"] - (position_dict["BOND"] + pending_dict["BOND"])
     num_to_sell = position_dict["BOND"]
@@ -260,7 +261,7 @@ def adrEval(exchange):
     fair_VALBZ = mean(VALBZ_sell)
     print(str(fair_VALE)+ " "+ str(fair_VALBZ))
     print("please i am here")
-    if (fair_VALBZ*CONVERSION_NUMBER) > ((fair_VALE*CONVERSION_NUMBER)+ADR_FEE):
+    if (fair_VALBZ*CONVERSION_NUMBER) < ((fair_VALE*CONVERSION_NUMBER)+ADR_FEE):
         print("============================================================================")
         print("herer")
         print(str(fair_VALE) + " " + str(fair_VALBZ))
@@ -271,10 +272,69 @@ def adrEval(exchange):
         write_to_exchange(exchange, {"type": "convert", "order_id": ORDER_number, "symbol": "VALE", "dir": "SELL",  "size": CONVERSION_NUMBER})
         read_from_exchange(exchange)
         ORDER_number += 1
+        if position_dict["VALBZ"] > 2:
+            write_to_exchange(exchange, {"type": "add", "order_id": ORDER_number, "symbol": "VALBZ", "dir": "SELL", "price": fair_VALBZ - 1, "size": 2})
+            read_from_exchange(exchange)
+            ORDER_number += 1
     if position_dict["VALBZ"] > 2:
-        write_to_exchange(exchange, {"type": "add", "order_id": ORDER_number, "symbol": "VALBZ", "dir": "SELL", "price": fair_VALBZ - 10, "size": 2})
+        write_to_exchange(exchange, {"type": "add", "order_id": ORDER_number, "symbol": "VALBZ", "dir": "SELL", "price": fair_VALBZ - 1, "size": 2})
         read_from_exchange(exchange)
         ORDER_number += 1
+
+
+def stockEval(exchange):
+    global ORDER_number
+    global limit_dict
+    #determine how many to sell
+    for stock_name in ACTIVE.keys():
+        num_to_buy = limit_dict[stock_name] - (position_dict[stock_name] + pending_dict[stock_name])
+        num_to_sell = position_dict[stock_name]
+
+        if stock_name == "BOND":
+            continue
+        elif stock_name == "VALBZ":
+            buy = VALBZ_buy
+            sell = VALBZ_sell
+        elif stock_name == "VALE":
+            buy = VALE_buy
+            sell = VALE_sell
+
+        elif stock_name == "GS":
+            buy = GS_buy
+            sell = GS_sell
+
+        elif stock_name == "MS":
+            buy = MS_buy
+            sell = MS_sell
+
+        elif stock_name == "WFC":
+            buy = WFC_buy
+            sell = WFC_sell
+        elif stock_name == "XLF":
+            buy = XLF_buy
+            sell = XLF_sell
+
+        print(" num to but, sell, position, pending")
+        print(num_to_buy)
+        print(num_to_sell)
+        print(position_dict[stock_name])
+        print(pending_dict[stock_name])
+        fair_sell = mean(sell)
+        fair_buy = fair_value(buy, sell)
+
+        if(position_dict[stock_name] > -20):
+            write_to_exchange(exchange, {"type": "add", "order_id": ORDER_number, "symbol": stock_name, "dir": "SELL", "price": fair_buy + 1, "size": num_to_sell})
+            ORDER_number += 1
+            read_from_exchange(exchange)
+            print("ORDER EXEC")
+        #position_dict["BOND"] -= 5
+        if num_to_buy > 0 and (position_dict[stock_name] - pending_dict[stock_name]) < 20:
+            write_to_exchange(exchange, {"type": "add", "order_id": ORDER_number, "symbol": stock_name, "dir": "BUY", "price": fair_buy - 1 , "size": num_to_buy})
+            ORDER_number += 1
+            pending_dict["BOND"] += 5
+            read_from_exchange(exchange)
+            print("ORDER EXEC BUY")
+        print("position for "+stock_name+": "+str(position_dict[stock_name]))
 
 def mean(x):
     if len(x)>10:
@@ -326,7 +386,8 @@ def main():
     print(read_from_exchange(exchange))
     while True:
         every_exchange_in_one(exchange)
-        adrEval(exchange)
+        stockEval(exchange)
+        #adrEval(exchange)
         bondEval(exchange)
 
 
