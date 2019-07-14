@@ -328,10 +328,10 @@ def stockEval(exchange):
             read_from_exchange(exchange)
             print("ORDER EXEC")
         #position_dict["BOND"] -= 5
-        if num_to_buy > 0 and (position_dict[stock_name] - pending_dict[stock_name]) < 20:
+        if num_to_buy > 0:
             write_to_exchange(exchange, {"type": "add", "order_id": ORDER_number, "symbol": stock_name, "dir": "BUY", "price": fair_buy - 1 , "size": num_to_buy})
             ORDER_number += 1
-            pending_dict["BOND"] += 5
+            pending_dict[stock_name] += num_to_buy
             read_from_exchange(exchange)
             print("ORDER EXEC BUY")
         print("position for "+stock_name+": "+str(position_dict[stock_name]))
